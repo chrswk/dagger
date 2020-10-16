@@ -47,9 +47,13 @@ android {
     testOptions {
         unitTests.includeAndroidResources = true
     }
+    lintOptions {
+        checkReleaseBuilds = false
+    }
 }
 
 hilt {
+    enableExperimentalClasspathAggregation = true
     enableTransformForLocalTests = true
 }
 

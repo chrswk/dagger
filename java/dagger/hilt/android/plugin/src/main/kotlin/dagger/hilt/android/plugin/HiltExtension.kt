@@ -19,6 +19,16 @@ package dagger.hilt.android.plugin
  * Configuration options for the Hilt Gradle Plugin
  */
 interface HiltExtension {
+
+  /**
+   * If set to `true`, Hilt will adjust the compile classpath such that it includes transitive
+   * dependencies, ignoring `api` or `implementation` boundaries during compilation. You should
+   * enable this option if your project has multiple level of transitive dependencies that contain
+   * injected classes or entry points. See https://github.com/google/dagger/issues/1991 for more
+   * context.
+   */
+  var enableExperimentalClasspathAggregation: Boolean
+
   /**
    * If set to `true`, Hilt will register a transform task that will rewrite `@AndroidEntryPoint`
    * annotated classes before the host-side JVM tests run. You should enable this option if you are
@@ -28,5 +38,6 @@ interface HiltExtension {
 }
 
 internal open class HiltExtensionImpl : HiltExtension {
+  override var enableExperimentalClasspathAggregation: Boolean = false
   override var enableTransformForLocalTests: Boolean = false
 }
