@@ -23,6 +23,9 @@ interface HiltExtension {
    * If set to `true`, Hilt will register a transform task that will rewrite `@AndroidEntryPoint`
    * annotated classes before the host-side JVM tests run. You should enable this option if you are
    * running Robolectric UI tests as part of your JUnit tests.
+   *
+   * This flag is not necessary if when com.android.tools.build:gradle:4.2.0+ is used and will be
+   * deprecated in a future version.
    */
   var enableTransformForLocalTests: Boolean
 }

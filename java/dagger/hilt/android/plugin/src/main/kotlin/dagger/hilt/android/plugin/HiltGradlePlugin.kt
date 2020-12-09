@@ -16,9 +16,15 @@
 
 package dagger.hilt.android.plugin
 
+import com.android.build.api.component.Component
+import com.android.build.api.extension.AndroidComponentsExtension
+import com.android.build.api.instrumentation.FramesComputationMode
+import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.TestedExtension
 import com.android.build.gradle.api.AndroidBasePlugin
+import dagger.hilt.android.plugin.util.SimpleAGPVersion
+import java.io.File
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -48,14 +54,50 @@ class HiltGradlePlugin : Plugin<Project> {
   }
 
   private fun configureHilt(project: Project) {
-    val extension = project.extensions.create(
+    val hiltExtension = project.extensions.create(
       HiltExtension::class.java, "hilt", HiltExtensionImpl::class.java
     )
-    configureTransform(project, extension)
+    if (SimpleAGPVersion.ANDROID_GRADLE_PLUGIN_VERSION < SimpleAGPVersion(4, 2)) {
+      // Configures bytecode transform using older APIs pre AGP 4.2
+      configureTransform(project, hiltExtension)
+    } else {
+      // Configures bytecode transform using AGP 4.2 ASM pipeline.
+      configureTransformASM(project, hiltExtension)
+    }
     configureProcessorFlags(project)
   }
 
-  private fun configureTransform(project: Project, extension: HiltExtension) {
+  @Suppress("UnstableApiUsage")
+  private fun configureTransformASM(project: Project, hiltExtension: HiltExtension) {
+    var warnAboutLocalTestsFlag = false
+    fun registerTransform(androidComponent: Component) {
+      if (hiltExtension.enableTransformForLocalTests && !warnAboutLocalTestsFlag) {
+        project.logger.warn(
+          "The Hilt configuration option 'enableTransformForLocalTests' is no longer necessary " +
+            "when com.android.tools.build:gradle:4.2.0+ is used."
+        )
+        warnAboutLocalTestsFlag = true
+      }
+      androidComponent.transformClassesWith(
+        classVisitorFactoryImplClass = AndroidEntryPointClassVisitor.Factory::class.java,
+        scope = InstrumentationScope.PROJECT
+      ) { params ->
+        val classesDir =
+          File(project.buildDir, "intermediates/javac/${androidComponent.name}/classes")
+        params.additionalClassesDir.set(classesDir)
+      }
+      androidComponent.setAsmFramesComputationMode(
+        FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS
+      )
+    }
+
+    val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
+    androidComponents.onVariants { registerTransform(it) }
+    androidComponents.androidTest { registerTransform(it) }
+    androidComponents.unitTest { registerTransform(it) }
+  }
+
+  private fun configureTransform(project: Project, hiltExtension: HiltExtension) {
     val androidExtension = project.extensions.findByType(BaseExtension::class.java)
       ?: throw error("Android BaseExtension not found.")
     androidExtension.registerTransform(AndroidEntryPointTransform())
@@ -66,7 +108,7 @@ class HiltGradlePlugin : Plugin<Project> {
       HiltTransformTestClassesTask.create(
         project = project,
         unitTestVariant = unitTestVariant,
-        extension = extension
+        extension = hiltExtension
       )
     }
   }

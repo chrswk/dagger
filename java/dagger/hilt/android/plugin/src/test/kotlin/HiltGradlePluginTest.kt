@@ -342,6 +342,6 @@ class HiltGradlePluginTest {
 
   companion object {
     const val TRANSFORM_TASK_NAME =
-      ":transformClassesWithAndroidEntryPointTransformForDebug"
+      ":transformDebugClassesWithAsm"
   }
 }

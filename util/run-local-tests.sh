@@ -25,7 +25,7 @@ done
 
 
 # Run gradle tests with different versions of Android Gradle Plugin
-readonly AGP_VERSIONS=("4.0.2" "3.6.4")
+readonly AGP_VERSIONS=("4.2.0-beta01" "4.1.0" "4.0.2" "3.6.4")
 readonly ANDROID_GRADLE_PROJECTS=(
     "java/dagger/example/gradle/android/simple"
     "javatests/artifacts/dagger-android/simple"

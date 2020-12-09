@@ -91,7 +91,7 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
             jcenter()
           }
           dependencies {
-            classpath 'com.android.tools.build:gradle:3.5.3'
+            classpath 'com.android.tools.build:gradle:4.2.0-beta01'
           }
         }
 
@@ -101,13 +101,13 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
         }
 
         android {
-          compileSdkVersion 29
-          buildToolsVersion "29.0.2"
+          compileSdkVersion 30
+          buildToolsVersion "30.0.2"
 
           defaultConfig {
             applicationId "plugin.test"
             minSdkVersion 21
-            targetSdkVersion 29
+            targetSdkVersion 30
           }
 
           compileOptions {
@@ -177,15 +177,14 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
     fun getOutput() = buildResult.output
 
     // Finds a transformed file. The srcFilePath is relative to the app's package.
-    fun getTransformedFile(srcFilePath: String) = File(
-      projectRoot,
-      "build/intermediates/transforms/AndroidEntryPointTransform/debug"
-    ).listFiles()?.first { it.isDirectory }?.let { transformedDir ->
-      File(transformedDir, srcFilePath).also {
+    fun getTransformedFile(srcFilePath: String): File {
+      val parentDir =
+        File(projectRoot, "build/intermediates/asm_instrumented_project_classes/debug")
+      return File(parentDir, srcFilePath).also {
         if (!it.exists()) {
           error("Unable to find transformed class ${it.path}")
         }
       }
-    } ?: error("Unable to find transformed output directory.")
+    }
   }
 }
